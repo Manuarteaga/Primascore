@@ -1,0 +1,821 @@
+# Código HTML, CSS y JavaScript completo integrado en Streamlit
+html_code = """
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PrimaScore | Evaluador de Opcionabilidad para Venta de Primas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        slate: {
+                            850: '#151e32',
+                            900: '#0f172a',
+                            950: '#090d16',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #090d16;
+            color: #f8fafc;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.06) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(56, 189, 248, 0.06) 0px, transparent 50%);
+        }
+        .glass-card {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(51, 65, 85, 0.6);
+        }
+        .score-ring {
+            transition: stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.5s ease;
+        }
+        .bar-fill {
+            transition: width 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased selection:bg-emerald-500/30 selection:text-emerald-200 p-2 sm:p-4">
+
+    <!-- Navbar -->
+    <header class="border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-md sticky top-0 z-30 rounded-xl mb-6">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                    <svg class="w-5 h-5 text-slate-950" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                    </svg>
+                </div>
+                <div>
+                    <span class="font-bold text-lg tracking-tight text-white">Prima<span class="text-emerald-400">Score</span></span>
+                    <span class="hidden sm:inline-block ml-2 text-[11px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700">Wheel & Covered Calls</span>
+                </div>
+            </div>
+            <div class="flex items-center gap-3 text-xs text-slate-400">
+                <span class="hidden md:inline">Enfoque: <strong class="text-slate-200">Venta de Primas (Delta 0.30)</strong></span>
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-mono">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                    Simulador Activo
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 max-w-6xl w-full mx-auto px-2 sm:px-6 py-2 space-y-6">
+
+        <!-- Hero & Search Bar -->
+        <section class="glass-card rounded-2xl p-5 sm:p-7 shadow-xl">
+            <div class="max-w-3xl mx-auto text-center space-y-2 mb-6">
+                <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-white">
+                    ¿Vale la pena vender primas en esta acción?
+                </h1>
+                <p class="text-sm sm:text-base text-slate-400">
+                    Analiza al instante la liquidez de la cadena de opciones, el <span class="text-slate-200 font-medium">Bid-Ask Spread</span>, el rendimiento de la prima y el capital requerido por lote (100 acciones).
+                </p>
+            </div>
+
+            <!-- Search Input -->
+            <form id="search-form" class="max-w-xl mx-auto relative">
+                <div class="relative flex items-center">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <svg class="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                    </div>
+                    <input 
+                        type="text" 
+                        id="ticker-input" 
+                        placeholder="Introduce un ticker (ej. AAPL, F, KO, NVDA, SOFI...)" 
+                        maxlength="8"
+                        autocomplete="off"
+                        class="block w-full pl-11 pr-28 py-3.5 bg-slate-950/90 border border-slate-700 rounded-xl text-white placeholder-slate-500 font-mono uppercase text-base focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all"
+                    >
+                    <button 
+                        type="submit"
+                        class="absolute right-2 top-2 bottom-2 px-4 bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-slate-950 font-semibold text-sm rounded-lg transition-all cursor-pointer shadow-md shadow-emerald-500/20">
+                        Evaluar
+                    </button>
+                </div>
+            </form>
+
+            <!-- Preset Chips -->
+            <div class="max-w-3xl mx-auto mt-4 flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 justify-start sm:justify-center">
+                <span class="text-xs text-slate-500 shrink-0 mr-1">Ejemplos:</span>
+                <button type="button" onclick="selectTicker('AAPL')" class="preset-btn shrink-0 px-3 py-1.5 rounded-lg text-xs font-mono bg-slate-800/90 hover:bg-slate-700 text-slate-200 border border-slate-700/80 transition cursor-pointer flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400"></span> AAPL
+                </button>
+                <button type="button" onclick="selectTicker('F')" class="preset-btn shrink-0 px-3 py-1.5 rounded-lg text-xs font-mono bg-slate-800/90 hover:bg-slate-700 text-slate-200 border border-slate-700/80 transition cursor-pointer flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400"></span> F (Ford)
+                </button>
+                <button type="button" onclick="selectTicker('NVDA')" class="preset-btn shrink-0 px-3 py-1.5 rounded-lg text-xs font-mono bg-slate-800/90 hover:bg-slate-700 text-slate-200 border border-slate-700/80 transition cursor-pointer flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400"></span> NVDA
+                </button>
+                <button type="button" onclick="selectTicker('KO')" class="preset-btn shrink-0 px-3 py-1.5 rounded-lg text-xs font-mono bg-slate-800/90 hover:bg-slate-700 text-slate-200 border border-slate-700/80 transition cursor-pointer flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-amber-400"></span> KO
+                </button>
+                <button type="button" onclick="selectTicker('ZIM')" class="preset-btn shrink-0 px-3 py-1.5 rounded-lg text-xs font-mono bg-slate-800/90 hover:bg-slate-700 text-slate-200 border border-slate-700/80 transition cursor-pointer flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-amber-400"></span> ZIM
+                </button>
+                <button type="button" onclick="selectTicker('ILLQ')" class="preset-btn shrink-0 px-3 py-1.5 rounded-lg text-xs font-mono bg-slate-800/90 hover:bg-slate-700 text-slate-200 border border-slate-700/80 transition cursor-pointer flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-rose-500"></span> ILLQ (Ilíquida)
+                </button>
+            </div>
+        </section>
+
+        <!-- Dashboard Grid -->
+        <div id="dashboard-content" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+            <!-- Left Column: Overall Score & Verdict (5 cols) -->
+            <div class="lg:col-span-5 flex flex-col gap-6">
+                <!-- Score Card -->
+                <div class="glass-card rounded-2xl p-6 flex flex-col items-center text-center relative overflow-hidden">
+                    <!-- Company Header -->
+                    <div class="w-full flex items-start justify-between border-b border-slate-800 pb-4 mb-5">
+                        <div class="text-left">
+                            <div class="flex items-center gap-2">
+                                <h2 id="res-ticker" class="text-2xl font-bold font-mono text-white">AAPL</h2>
+                                <span id="res-sector" class="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700">Tecnología</span>
+                            </div>
+                            <p id="res-name" class="text-sm text-slate-400 mt-0.5">Apple Inc.</p>
+                        </div>
+                        <div class="text-right">
+                            <div id="res-price" class="text-xl font-bold font-mono text-white">$228.50</div>
+                            <div id="res-lot-cost" class="text-xs font-mono text-slate-400">100 acc: <span class="text-slate-200">$22,850</span></div>
+                        </div>
+                    </div>
+
+                    <!-- Circular Gauge -->
+                    <div class="relative w-48 h-48 flex items-center justify-center my-1">
+                        <svg class="w-full h-full -rotate-90" viewBox="0 0 120 120">
+                            <circle cx="60" cy="60" r="52" fill="none" stroke="#1e293b" stroke-width="10" />
+                            <circle id="score-circle" class="score-ring" cx="60" cy="60" r="52" fill="none" stroke="#10b981" stroke-width="10" stroke-linecap="round" stroke-dasharray="326.72" stroke-dashoffset="326.72" />
+                        </svg>
+                        <div class="absolute inset-0 flex flex-col items-center justify-center">
+                            <span class="text-xs uppercase tracking-widest text-slate-400 font-medium">Score</span>
+                            <span id="res-score" class="text-5xl font-bold font-mono text-white tracking-tighter my-0.5">92</span>
+                            <span class="text-xs font-mono text-slate-500">/ 100 pts</span>
+                        </div>
+                    </div>
+
+                    <!-- Verdict Badge -->
+                    <div id="verdict-badge" class="mt-4 px-4 py-2 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 font-semibold text-sm flex items-center gap-2">
+                        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                        <span id="verdict-text">Altamente Opcionable (Ideal para Primas)</span>
+                    </div>
+
+                    <!-- Earnings / Event Warning -->
+                    <div id="earnings-banner" class="w-full mt-5 pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs">
+                        <span class="text-slate-400 flex items-center gap-1.5">
+                            <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                            Próximos Resultados:
+                        </span>
+                        <span id="res-earnings" class="font-mono font-medium text-slate-200">En 42 días (Seguro)</span>
+                    </div>
+                </div>
+
+                <!-- Algorithm Diagnosis -->
+                <div class="glass-card rounded-2xl p-5 flex-1">
+                    <div class="flex items-center gap-2 mb-3">
+                        <div class="p-1.5 rounded-lg bg-sky-500/10 text-sky-400 border border-sky-500/20">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+                        </div>
+                        <h3 class="font-semibold text-sm text-white">Diagnóstico para Vendedores de Primas</h3>
+                    </div>
+                    <ul id="diagnosis-list" class="space-y-2.5 text-xs sm:text-sm text-slate-300 leading-relaxed">
+                        <!-- Dynamic items -->
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Right Column: 4 Pillars Breakdown & Simulator (7 cols) -->
+            <div class="lg:col-span-7 flex flex-col gap-6">
+                
+                <!-- 4 Pillars Card -->
+                <div class="glass-card rounded-2xl p-6">
+                    <div class="flex items-center justify-between mb-5">
+                        <h3 class="font-semibold text-base text-white">Desglose de los 4 Pilares de Opcionabilidad</h3>
+                        <span class="text-xs font-mono text-slate-400">Ponderación por perfil</span>
+                    </div>
+
+                    <div class="space-y-5">
+                        <!-- Pillar 1: Liquidity & Spread -->
+                        <div class="p-4 rounded-xl bg-slate-950/60 border border-slate-800/80">
+                            <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-sm font-semibold text-white">1. Liquidez y Horquilla (Bid-Ask)</span>
+                                    <span class="text-[11px] font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">Peso 35%</span>
+                                </div>
+                                <span id="p1-score-text" class="font-mono text-sm font-bold text-emerald-400">34 / 35 pts</span>
+                            </div>
+                            <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden mb-3">
+                                <div id="p1-bar" class="bar-fill h-full bg-emerald-400 rounded-full" style="width: 97%"></div>
+                            </div>
+                            <div class="grid grid-cols-3 gap-2 text-xs">
+                                <div class="bg-slate-900/90 p-2 rounded-lg border border-slate-800/60">
+                                    <span class="text-slate-500 block text-[11px]">Spread ATM</span>
+                                    <span id="m-spread" class="font-mono font-semibold text-slate-200">$0.02 (0.6%)</span>
+                                </div>
+                                <div class="bg-slate-900/90 p-2 rounded-lg border border-slate-800/60">
+                                    <span class="text-slate-500 block text-[11px]">Open Interest</span>
+                                    <span id="m-oi" class="font-mono font-semibold text-slate-200">48,200</span>
+                                </div>
+                                <div class="bg-slate-900/90 p-2 rounded-lg border border-slate-800/60">
+                                    <span class="text-slate-500 block text-[11px]">Volumen Diario</span>
+                                    <span id="m-vol" class="font-mono font-semibold text-slate-200">19,450</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Pillar 2: Premium Yield & IV -->
+                        <div class="p-4 rounded-xl bg-slate-950/60 border border-slate-800/80">
+                            <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-sm font-semibold text-white">2. Rentabilidad de la Prima (Yield / IV)</span>
+                                    <span class="text-[11px] font-mono px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">Peso 30%</span>
+                                </div>
+                                <span id="p2-score-text" class="font-mono text-sm font-bold text-emerald-400">26 / 30 pts</span>
+                            </div>
+                            <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden mb-3">
+                                <div id="p2-bar" class="bar-fill h-full bg-emerald-400 rounded-full" style="width: 86%"></div>
+                            </div>
+                            <div class="grid grid-cols-3 gap-2 text-xs">
+                                <div class="bg-slate-900/90 p-2 rounded-lg border border-slate-800/60">
+                                    <span class="text-slate-500 block text-[11px]">Yield Mensual</span>
+                                    <span id="m-yield" class="font-mono font-semibold text-emerald-400">1.65% (~19.8% anual)</span>
+                                </div>
+                                <div class="bg-slate-900/90 p-2 rounded-lg border border-slate-800/60">
+                                    <span class="text-slate-500 block text-[11px]">Volatilidad (IV)</span>
+                                    <span id="m-iv" class="font-mono font-semibold text-slate-200">26.4%</span>
+                                </div>
+                                <div class="bg-slate-900/90 p-2 rounded-lg border border-slate-800/60">
+                                    <span class="text-slate-500 block text-[11px]">IV Rank</span>
+                                    <span id="m-ivr" class="font-mono font-semibold text-slate-200">38%</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Pillar 3 & 4 Grid -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <!-- Pillar 3: Capital & Strikes -->
+                            <div class="p-4 rounded-xl bg-slate-950/60 border border-slate-800/80">
+                                <div class="flex items-center justify-between gap-1 mb-2">
+                                    <span class="text-sm font-semibold text-white">3. Capital y Strikes</span>
+                                    <span id="p3-score-text" class="font-mono text-xs font-bold text-emerald-400">17 / 20 pts</span>
+                                </div>
+                                <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden mb-3">
+                                    <div id="p3-bar" class="bar-fill h-full bg-emerald-400 rounded-full" style="width: 85%"></div>
+                                </div>
+                                <div class="space-y-1.5 text-xs">
+                                    <div class="flex justify-between">
+                                        <span class="text-slate-500">1 Contrato (100 acc):</span>
+                                        <span id="m-capital" class="font-mono font-medium text-slate-200">$22,850</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-slate-500">Salto entre Strikes:</span>
+                                        <span id="m-strikes" class="font-mono font-medium text-slate-200">Cada $2.50</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Pillar 4: Expirations & Stability -->
+                            <div class="p-4 rounded-xl bg-slate-950/60 border border-slate-800/80">
+                                <div class="flex items-center justify-between gap-1 mb-2">
+                                    <span class="text-sm font-semibold text-white">4. Vencimientos</span>
+                                    <span id="p4-score-text" class="font-mono text-xs font-bold text-emerald-400">15 / 15 pts</span>
+                                </div>
+                                <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden mb-3">
+                                    <div id="p4-bar" class="bar-fill h-full bg-emerald-400 rounded-full" style="width: 100%"></div>
+                                </div>
+                                <div class="space-y-1.5 text-xs">
+                                    <div class="flex justify-between">
+                                        <span class="text-slate-500">Frecuencia:</span>
+                                        <span id="m-freq" class="font-mono font-medium text-emerald-400">Semanales (Weeklies)</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-slate-500">Dividendo Anual:</span>
+                                        <span id="m-div" class="font-mono font-medium text-slate-200">0.44%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Interactive Income Simulator (Covered Call / Cash-Secured Put) -->
+                <div class="glass-card rounded-2xl p-6 border-emerald-500/20">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                        <div>
+                            <h3 class="font-semibold text-base text-white flex items-center gap-2">
+                                <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                Simulador Rápido de Ingresos (30 DTE · Delta ~0.30)
+                            </h3>
+                            <p class="text-xs text-slate-400 mt-0.5">Estimación vendiendo 1 contrato cubierto por cada 100 acciones.</p>
+                        </div>
+
+                        <!-- Strategy Toggle & Contract Count -->
+                        <div class="flex items-center gap-2">
+                            <div class="inline-flex rounded-lg bg-slate-950 p-1 border border-slate-800 text-xs">
+                                <button type="button" id="btn-cc" onclick="setStrategy('CC')" class="px-2.5 py-1 rounded-md font-medium bg-emerald-500 text-slate-950 transition cursor-pointer">Covered Call</button>
+                                <button type="button" id="btn-csp" onclick="setStrategy('CSP')" class="px-2.5 py-1 rounded-md font-medium text-slate-400 hover:text-white transition cursor-pointer">Cash-Sec Put</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Contracts Slider -->
+                    <div class="mb-4 bg-slate-950/50 p-3 rounded-xl border border-slate-800/80 flex items-center justify-between gap-4">
+                        <label for="contracts-slider" class="text-xs text-slate-300 whitespace-nowrap">
+                            Contratos: <strong id="contracts-count" class="font-mono text-emerald-400 text-sm">1</strong> <span class="text-slate-500">(<span id="shares-count" class="font-mono">100</span> acc)</span>
+                        </label>
+                        <input id="contracts-slider" type="range" min="1" max="10" value="1" oninput="updateSimulator()" class="w-full max-w-xs accent-emerald-500 cursor-pointer h-1.5 bg-slate-800 rounded-lg">
+                    </div>
+
+                    <!-- Simulator Results Grid -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        <div class="bg-slate-950/80 p-3.5 rounded-xl border border-slate-800">
+                            <span id="sim-strike-label" class="text-[11px] text-slate-400 block">Strike Call (~5% OTM)</span>
+                            <span id="sim-strike" class="font-mono text-base sm:text-lg font-bold text-white mt-0.5 block">$240.00</span>
+                        </div>
+                        <div class="bg-slate-950/80 p-3.5 rounded-xl border border-slate-800">
+                            <span class="text-[11px] text-slate-400 block">Prima Neta (30 días)</span>
+                            <span id="sim-premium" class="font-mono text-base sm:text-lg font-bold text-emerald-400 mt-0.5 block">+$377</span>
+                        </div>
+                        <div class="bg-slate-950/80 p-3.5 rounded-xl border border-slate-800">
+                            <span class="text-[11px] text-slate-400 block">Capital / Garantía</span>
+                            <span id="sim-capital" class="font-mono text-base sm:text-lg font-bold text-slate-200 mt-0.5 block">$22,850</span>
+                        </div>
+                        <div class="bg-slate-950/80 p-3.5 rounded-xl border border-slate-800">
+                            <span class="text-[11px] text-slate-400 block">Retorno Anualizado</span>
+                            <span id="sim-roc" class="font-mono text-base sm:text-lg font-bold text-sky-400 mt-0.5 block">19.8%</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer Disclaimer -->
+    <footer class="border-t border-slate-800/60 py-5 mt-8 text-center text-xs text-slate-500 px-4">
+        <p><strong>PrimaScore (Prototipo Conceptual):</strong> Los datos mostrados son simulados con fines educativos y de demostración de interfaz. No constituye asesoramiento financiero.</p>
+    </footer>
+
+    <script>
+        const PRESET_DATA = {
+            'AAPL': {
+                ticker: 'AAPL',
+                name: 'Apple Inc.',
+                sector: 'Tecnología',
+                price: 228.50,
+                spreadDollar: 0.02,
+                spreadPct: 0.5,
+                oi: 48200,
+                volume: 19450,
+                iv: 26.4,
+                ivRank: 38,
+                monthlyYieldPct: 1.65,
+                strikeStep: '$2.50',
+                hasWeeklies: true,
+                dividendYield: '0.44%',
+                earningsDays: 42,
+                p1: 34, p2: 26, p3: 17, p4: 15,
+                diagnosis: [
+                    { type: 'pro', text: '<strong>Liquidez institucional:</strong> Horquillas (Bid-Ask) de apenas $0.01–$0.02 permiten entrar y cerrar posiciones antes de vencimiento sin perder rentabilidad.' },
+                    { type: 'pro', text: '<strong>Equilibrio ideal para The Wheel:</strong> Primas constantes (~1.6% mensual a Delta 0.30) con riesgo de caída moderado frente a otras tecnológicas.' },
+                    { type: 'neutral', text: '<strong>Requisito de capital:</strong> Necesitas ~$22,850 para cubrir 1 lote de 100 acciones.' }
+                ]
+            },
+            'F': {
+                ticker: 'F',
+                name: 'Ford Motor Company',
+                sector: 'Automoción',
+                price: 11.20,
+                spreadDollar: 0.01,
+                spreadPct: 3.8,
+                oi: 65400,
+                volume: 24100,
+                iv: 34.2,
+                ivRank: 45,
+                monthlyYieldPct: 2.15,
+                strikeStep: '$0.50',
+                hasWeeklies: true,
+                dividendYield: '5.35%',
+                earningsDays: 29,
+                p1: 31, p2: 27, p3: 20, p4: 15,
+                diagnosis: [
+                    { type: 'pro', text: '<strong>Accesibilidad máxima:</strong> Con solo ~$1,120 puedes comprar 100 acciones y empezar a vender Covered Calls o Cash-Secured Puts.' },
+                    { type: 'pro', text: '<strong>Strikes cada $0.50 y alto dividendo:</strong> Facilita gestionar el precio de asignación y suma un dividendo superior al 5% anual mientras mantienes las acciones.' },
+                    { type: 'neutral', text: '<strong>Impacto de comisiones:</strong> Al ser primas de ~$0.20–$0.25 por acción, vigila las comisiones por contrato de tu bróker.' }
+                ]
+            },
+            'NVDA': {
+                ticker: 'NVDA',
+                name: 'NVIDIA Corporation',
+                sector: 'Semiconductores',
+                price: 138.00,
+                spreadDollar: 0.03,
+                spreadPct: 0.4,
+                oi: 112000,
+                volume: 85300,
+                iv: 48.5,
+                ivRank: 52,
+                monthlyYieldPct: 3.40,
+                strikeStep: '$1.00',
+                hasWeeklies: true,
+                dividendYield: '0.03%',
+                earningsDays: 18,
+                p1: 35, p2: 30, p3: 16, p4: 13,
+                diagnosis: [
+                    { type: 'pro', text: '<strong>Primas muy jugosas y strikes cada $1:</strong> Su alta volatilidad implícita genera rendimientos superiores al 3% mensual fuera del dinero (OTM).' },
+                    { type: 'pro', text: '<strong>La cadena más líquida del mercado:</strong> Ejecución instantánea en cualquier vencimiento semanal.' },
+                    { type: 'warn', text: '<strong>Alta velocidad de movimiento:</strong> Riesgo elevado de que el precio supere tu strike rápidamente (límite de ganancias en Covered Calls) o caiga con fuerza.' }
+                ]
+            },
+            'KO': {
+                ticker: 'KO',
+                name: 'The Coca-Cola Company',
+                sector: 'Consumo Defensivo',
+                price: 64.50,
+                spreadDollar: 0.02,
+                spreadPct: 2.4,
+                oi: 18500,
+                volume: 5200,
+                iv: 16.8,
+                ivRank: 22,
+                monthlyYieldPct: 0.85,
+                strikeStep: '$0.50',
+                hasWeeklies: true,
+                dividendYield: '3.01%',
+                earningsDays: 51,
+                p1: 29, p2: 14, p3: 19, p4: 15,
+                diagnosis: [
+                    { type: 'pro', text: '<strong>Acción muy estable y defensiva:</strong> Ideal si tu prioridad absoluta es conservar las acciones y cobrar su dividendo creciente.' },
+                    { type: 'warn', text: '<strong>Primas muy bajas (IV 16.8%):</strong> Apenas rinde un ~0.85% mensual. Muchos inversores consideran que la prima no compensa limitar el potencial alcista.' },
+                    { type: 'neutral', text: '<strong>Recomendación:</strong> Úsala solo para vender Calls muy pegadas al dinero o tras repuntes puntuales de volatilidad.' }
+                ]
+            },
+            'ZIM': {
+                ticker: 'ZIM',
+                name: 'ZIM Integrated Shipping',
+                sector: 'Transporte Marítimo',
+                price: 21.40,
+                spreadDollar: 0.12,
+                spreadPct: 7.5,
+                oi: 9400,
+                volume: 3100,
+                iv: 76.0,
+                ivRank: 68,
+                monthlyYieldPct: 5.20,
+                strikeStep: '$0.50',
+                hasWeeklies: true,
+                dividendYield: 'Variable',
+                earningsDays: 11,
+                p1: 21, p2: 28, p3: 19, p4: 9,
+                diagnosis: [
+                    { type: 'pro', text: '<strong>Primas explosivas (>5% mensual):</strong> El capital requerido es bajo (~$2,140) y la prima reduce drásticamente tu precio de equilibrio.' },
+                    { type: 'warn', text: '<strong>¡Cuidado con Resultados en 11 días!</strong> Las empresas navieras sufren gaps violentos tras presentar resultados.' },
+                    { type: 'warn', text: '<strong>Spread algo amplio (7.5%):</strong> Usa siempre órdenes limitadas (Limit Orders) en el punto medio (Mid Price).' }
+                ]
+            },
+            'ILLQ': {
+                ticker: 'ILLQ',
+                name: 'SmallCap Illiquid Corp (Ejemplo)',
+                sector: 'Industrial / MicroCap',
+                price: 18.75,
+                spreadDollar: 0.45,
+                spreadPct: 38.0,
+                oi: 45,
+                volume: 4,
+                iv: 41.0,
+                ivRank: 30,
+                monthlyYieldPct: 1.90,
+                strikeStep: '$2.50',
+                hasWeeklies: false,
+                dividendYield: '0.00%',
+                earningsDays: 35,
+                p1: 4, p2: 15, p3: 14, p4: 5,
+                diagnosis: [
+                    { type: 'bad', text: '<strong>Trampa de liquidez (No operar):</strong> El Bid-Ask Spread del 38% significa que pierdes casi un 40% del valor de la prima nada más abrir la operación.' },
+                    { type: 'bad', text: '<strong>Sin contrapartida:</strong> Apenas 4 contratos negociados hoy; si necesitas cerrar o rolar la opción antes de tiempo, quedarás atrapado.' },
+                    { type: 'warn', text: '<strong>Solo vencimientos mensuales y saltos de $2.50:</strong> Muy poca flexibilidad para ajustar strikes en una acción de $18.' }
+                ]
+            }
+        };
+
+        let currentStock = null;
+        let currentStrategy = 'CC';
+
+        function generateSimulatedTicker(rawTicker) {
+            const ticker = rawTicker.toUpperCase().replace(/[^A-Z0-9.]/g, '');
+            if (!ticker) return PRESET_DATA['AAPL'];
+            if (PRESET_DATA[ticker]) return PRESET_DATA[ticker];
+
+            let hash = 0;
+            for (let i = 0; i < ticker.length; i++) {
+                hash = ticker.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            const absHash = Math.abs(hash);
+
+            const sectors = ['Software / Cloud', 'Energía', 'Salud / Farma', 'Finanzas', 'Consumo', 'Industria'];
+            const sector = sectors[absHash % sectors.length];
+            const price = parseFloat((15 + (absHash % 240) + ((absHash % 99) / 100)).toFixed(2));
+            
+            const liquidityTier = absHash % 3;
+            let oi, volume, spreadDollar, spreadPct, p1, hasWeeklies;
+
+            if (liquidityTier === 0) {
+                oi = 12000 + (absHash % 35000);
+                volume = 4000 + (absHash % 15000);
+                spreadDollar = 0.03;
+                spreadPct = parseFloat((0.8 + (absHash % 15) / 10).toFixed(1));
+                p1 = 30 + (absHash % 6);
+                hasWeeklies = true;
+            } else if (liquidityTier === 1) {
+                oi = 1500 + (absHash % 6000);
+                volume = 350 + (absHash % 1800);
+                spreadDollar = 0.10;
+                spreadPct = parseFloat((4.5 + (absHash % 45) / 10).toFixed(1));
+                p1 = 21 + (absHash % 7);
+                hasWeeklies = (absHash % 2 === 0);
+            } else {
+                oi = 80 + (absHash % 400);
+                volume = 10 + (absHash % 60);
+                spreadDollar = 0.35;
+                spreadPct = parseFloat((18.0 + (absHash % 200) / 10).toFixed(1));
+                p1 = 7 + (absHash % 8);
+                hasWeeklies = false;
+            }
+
+            const iv = parseFloat((20 + (absHash % 42)).toFixed(1));
+            const ivRank = 18 + (absHash % 65);
+            const monthlyYieldPct = parseFloat((iv * 0.062).toFixed(2));
+            const p2 = Math.min(30, Math.max(10, Math.round(monthlyYieldPct * 9)));
+            const p3 = price < 50 ? 19 : (price < 150 ? 17 : 14);
+            const earningsDays = 8 + (absHash % 65);
+            const p4 = (hasWeeklies ? 10 : 5) + (earningsDays > 21 ? 5 : 1);
+
+            const diagnosis = [];
+            if (p1 >= 29) {
+                diagnosis.push({ type: 'pro', text: `<strong>Buena liquidez en opciones:</strong> Open Interest de ${oi.toLocaleString('es-ES')} contratos y horquilla ajustada (${spreadPct}%).` });
+            } else if (p1 >= 20) {
+                diagnosis.push({ type: 'neutral', text: `<strong>Liquidez aceptable, pero usa órdenes limitadas:</strong> El spread del ${spreadPct}% requiere negociar en el punto medio.` });
+            } else {
+                diagnosis.push({ type: 'bad', text: `<strong>Baja liquidez detectada:</strong> Un spread del ${spreadPct}% erosionará gran parte de tus ingresos por primas.` });
+            }
+
+            if (monthlyYieldPct >= 2.0) {
+                diagnosis.push({ type: 'pro', text: `<strong>Atractiva generación de ingresos:</strong> Volatilidad implícita del ${iv}% permite aspirar a un ~${monthlyYieldPct}% mensual.` });
+            } else {
+                diagnosis.push({ type: 'warn', text: `<strong>Prima conservadora (~${monthlyYieldPct}% mensual):</strong> Volatilidad baja (${iv}%), ideal solo si buscas bajo riesgo de asignación.` });
+            }
+
+            if (earningsDays <= 15) {
+                diagnosis.push({ type: 'warn', text: `<strong>Alerta de Resultados:</strong> Presenta cuentas en ${earningsDays} días. Evita vender primas que atraviesen esa fecha si buscas estabilidad.` });
+            } else {
+                diagnosis.push({ type: 'pro', text: `<strong>Ventana despejada:</strong> Faltan ${earningsDays} días para próximos resultados trimestrales.` });
+            }
+
+            return {
+                ticker,
+                name: `${ticker} Holdings Corp. (Simulado)`,
+                sector,
+                price,
+                spreadDollar,
+                spreadPct,
+                oi,
+                volume,
+                iv,
+                ivRank,
+                monthlyYieldPct,
+                strikeStep: price < 25 ? '$0.50' : (price < 100 ? '$1.00' : '$2.50'),
+                hasWeeklies,
+                dividendYield: `${((absHash % 35) / 10).toFixed(2)}%`,
+                earningsDays,
+                p1, p2, p3, p4,
+                diagnosis
+            };
+        }
+
+        function formatCurrency(val) {
+            return '$' + val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function formatIntCurrency(val) {
+            return '$' + Math.round(val).toLocaleString('en-US');
+        }
+
+        function getColorClasses(score) {
+            if (score >= 75) {
+                return {
+                    stroke: '#10b981',
+                    text: 'text-emerald-400',
+                    bg: 'bg-emerald-500',
+                    badgeBg: 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300',
+                    verdict: 'Altamente Opcionable (Ideal para Primas)',
+                    icon: '<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>'
+                };
+            } else if (score >= 55) {
+                return {
+                    stroke: '#f59e0b',
+                    text: 'text-amber-400',
+                    bg: 'bg-amber-500',
+                    badgeBg: 'bg-amber-500/15 border-amber-500/30 text-amber-300',
+                    verdict: 'Moderada (Revisar Spread o Prima Baja)',
+                    icon: '<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>'
+                };
+            } else {
+                return {
+                    stroke: '#f43f5e',
+                    text: 'text-rose-400',
+                    bg: 'bg-rose-500',
+                    badgeBg: 'bg-rose-500/15 border-rose-500/30 text-rose-300',
+                    verdict: 'No Recomendada (Trampa de Liquidez)',
+                    icon: '<svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>'
+                };
+            }
+        }
+
+        function renderStock(data) {
+            currentStock = data;
+            const totalScore = Math.min(100, Math.max(0, data.p1 + data.p2 + data.p3 + data.p4));
+            const theme = getColorClasses(totalScore);
+
+            document.getElementById('res-ticker').textContent = data.ticker;
+            document.getElementById('res-name').textContent = data.name;
+            document.getElementById('res-sector').textContent = data.sector;
+            document.getElementById('res-price').textContent = formatCurrency(data.price);
+            document.getElementById('res-lot-cost').innerHTML = `100 acc: <span class="text-slate-200 font-semibold">${formatIntCurrency(data.price * 100)}</span>`;
+
+            const circle = document.getElementById('score-circle');
+            const circumference = 326.72;
+            const offset = circumference - (totalScore / 100) * circumference;
+            circle.style.stroke = theme.stroke;
+            circle.style.strokeDashoffset = offset;
+            document.getElementById('res-score').textContent = totalScore;
+
+            const badge = document.getElementById('verdict-badge');
+            badge.className = `mt-4 px-4 py-2 rounded-xl border font-semibold text-xs sm:text-sm flex items-center gap-2 ${theme.badgeBg}`;
+            badge.innerHTML = `${theme.icon}<span>${theme.verdict}</span>`;
+
+            const earningsEl = document.getElementById('res-earnings');
+            if (data.earningsDays <= 15) {
+                earningsEl.className = 'font-mono font-semibold text-amber-400';
+                earningsEl.textContent = `¡En ${data.earningsDays} días! (Precaución)`;
+            } else {
+                earningsEl.className = 'font-mono font-medium text-emerald-400';
+                earningsEl.textContent = `En ${data.earningsDays} días (Despejado)`;
+            }
+
+            updatePillar('p1', data.p1, 35);
+            document.getElementById('m-spread').textContent = `$${data.spreadDollar.toFixed(2)} (${data.spreadPct}%)`;
+            document.getElementById('m-spread').className = `font-mono font-semibold ${data.spreadPct <= 3 ? 'text-emerald-400' : (data.spreadPct <= 10 ? 'text-amber-400' : 'text-rose-400')}`;
+            document.getElementById('m-oi').textContent = data.oi.toLocaleString('es-ES');
+            document.getElementById('m-vol').textContent = data.volume.toLocaleString('es-ES');
+
+            updatePillar('p2', data.p2, 30);
+            const annualYield = (data.monthlyYieldPct * 12).toFixed(1);
+            document.getElementById('m-yield').textContent = `${data.monthlyYieldPct}% (~${annualYield}% anual)`;
+            document.getElementById('m-iv').textContent = `${data.iv}%`;
+            document.getElementById('m-ivr').textContent = `${data.ivRank}%`;
+
+            updatePillar('p3', data.p3, 20);
+            document.getElementById('m-capital').textContent = formatIntCurrency(data.price * 100);
+            document.getElementById('m-strikes').textContent = `Cada ${data.strikeStep}`;
+
+            updatePillar('p4', data.p4, 15);
+            const freqEl = document.getElementById('m-freq');
+            freqEl.textContent = data.hasWeeklies ? 'Semanales (Weeklies)' : 'Solo Mensuales';
+            freqEl.className = `font-mono font-medium ${data.hasWeeklies ? 'text-emerald-400' : 'text-amber-400'}`;
+            document.getElementById('m-div').textContent = data.dividendYield;
+
+            const diagList = document.getElementById('diagnosis-list');
+            diagList.innerHTML = data.diagnosis.map(item => {
+                let icon = '';
+                if (item.type === 'pro') {
+                    icon = `<span class="mt-0.5 w-4 h-4 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 text-[10px] font-bold">✓</span>`;
+                } else if (item.type === 'warn') {
+                    icon = `<span class="mt-0.5 w-4 h-4 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 text-[10px] font-bold">!</span>`;
+                } else if (item.type === 'bad') {
+                    icon = `<span class="mt-0.5 w-4 h-4 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center shrink-0 text-[10px] font-bold">✕</span>`;
+                } else {
+                    icon = `<span class="mt-0.5 w-4 h-4 rounded-full bg-slate-700 text-slate-300 flex items-center justify-center shrink-0 text-[10px] font-bold">i</span>`;
+                }
+                return `<li class="flex items-start gap-2.5">${icon}<span>${item.text}</span></li>`;
+            }).join('');
+
+            updateSimulator();
+        }
+
+        function updatePillar(prefix, score, max) {
+            const pct = Math.round((score / max) * 100);
+            const scoreEl = document.getElementById(`${prefix}-score-text`);
+            const barEl = document.getElementById(`${prefix}-bar`);
+
+            scoreEl.textContent = `${score} / ${max} pts`;
+            barEl.style.width = `${pct}%`;
+
+            if (pct >= 75) {
+                scoreEl.className = 'font-mono text-xs sm:text-sm font-bold text-emerald-400';
+                barEl.className = 'bar-fill h-full bg-emerald-400 rounded-full';
+            } else if (pct >= 50) {
+                scoreEl.className = 'font-mono text-xs sm:text-sm font-bold text-amber-400';
+                barEl.className = 'bar-fill h-full bg-amber-400 rounded-full';
+            } else {
+                scoreEl.className = 'font-mono text-xs sm:text-sm font-bold text-rose-400';
+                barEl.className = 'bar-fill h-full bg-rose-500 rounded-full';
+            }
+        }
+
+        function setStrategy(strat) {
+            currentStrategy = strat;
+            const btnCC = document.getElementById('btn-cc');
+            const btnCSP = document.getElementById('btn-csp');
+
+            if (strat === 'CC') {
+                btnCC.className = 'px-2.5 py-1 rounded-md font-medium bg-emerald-500 text-slate-950 transition cursor-pointer';
+                btnCSP.className = 'px-2.5 py-1 rounded-md font-medium text-slate-400 hover:text-white transition cursor-pointer';
+            } else {
+                btnCSP.className = 'px-2.5 py-1 rounded-md font-medium bg-emerald-500 text-slate-950 transition cursor-pointer';
+                btnCC.className = 'px-2.5 py-1 rounded-md font-medium text-slate-400 hover:text-white transition cursor-pointer';
+            }
+            updateSimulator();
+        }
+
+        function updateSimulator() {
+            if (!currentStock) return;
+            const contracts = parseInt(document.getElementById('contracts-slider').value, 10);
+            const shares = contracts * 100;
+
+            document.getElementById('contracts-count').textContent = contracts;
+            document.getElementById('shares-count').textContent = shares.toLocaleString('es-ES');
+
+            let strikeRaw = currentStrategy === 'CC' 
+                ? currentStock.price * 1.05 
+                : currentStock.price * 0.95;
+
+            const step = currentStock.price < 25 ? 0.5 : (currentStock.price < 100 ? 1 : 2.5);
+            const strike = Math.round(strikeRaw / step) * step;
+
+            const capitalRequired = currentStrategy === 'CC'
+                ? currentStock.price * shares
+                : strike * shares;
+
+            const monthlyPremium = (currentStock.price * (currentStock.monthlyYieldPct / 100)) * shares;
+            const annualizedRoc = ((monthlyPremium * 12) / capitalRequired) * 100;
+
+            document.getElementById('sim-strike-label').textContent = currentStrategy === 'CC' 
+                ? 'Strike Call (~5% arriba)' 
+                : 'Strike Put (~5% abajo)';
+            document.getElementById('sim-strike').textContent = formatCurrency(strike);
+            document.getElementById('sim-premium').textContent = `+${formatIntCurrency(monthlyPremium)}`;
+            document.getElementById('sim-capital').textContent = formatIntCurrency(capitalRequired);
+            document.getElementById('sim-roc').textContent = `${annualizedRoc.toFixed(1)}%`;
+        }
+
+        function selectTicker(symbol) {
+            document.getElementById('ticker-input').value = symbol;
+            const data = generateSimulatedTicker(symbol);
+            renderStock(data);
+        }
+
+        document.getElementById('search-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const val = document.getElementById('ticker-input').value.trim();
+            if (val) {
+                selectTicker(val);
+            }
+        });
+
+        window.addEventListener('DOMContentLoaded', () => {
+            selectTicker('AAPL');
+        });
+    </script>
+</body>
+</html>
+"""
+
+# Renderizar el HTML interactivo dentro de Streamlit ocupando todo el ancho y alto
+st.components.v1.html(html_code, height=980, scrolling=True)
