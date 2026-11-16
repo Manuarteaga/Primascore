@@ -1,4 +1,14 @@
-```html
+import streamlit as st
+
+# Configuración de la página en modo ancho (wide)
+st.set_page_config(
+    page_title="PrimaScore | Evaluador de Opcionabilidad",
+    page_icon="📈",
+    layout="wide",
+)
+
+# Código HTML, CSS y JavaScript completo integrado en Streamlit
+html_code = """
 <!DOCTYPE html>
 <html lang="es" class="dark">
 <head>
@@ -48,7 +58,6 @@
         .bar-fill {
             transition: width 0.7s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        /* Ocultar scrollbar en chips horizontales móvil */
         .no-scrollbar::-webkit-scrollbar {
             display: none;
         }
@@ -58,10 +67,10 @@
         }
     </style>
 </head>
-<body class="min-h-screen flex flex-col antialiased selection:bg-emerald-500/30 selection:text-emerald-200">
+<body class="min-h-screen flex flex-col antialiased selection:bg-emerald-500/30 selection:text-emerald-200 p-2 sm:p-4">
 
     <!-- Navbar -->
-    <header class="border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-md sticky top-0 z-30">
+    <header class="border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-md sticky top-0 z-30 rounded-xl mb-6">
         <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
             <div class="flex items-center gap-2.5">
                 <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
@@ -85,7 +94,7 @@
     </header>
 
     <!-- Main Content -->
-    <main class="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-6">
+    <main class="flex-1 max-w-6xl w-full mx-auto px-2 sm:px-6 py-2 space-y-6">
 
         <!-- Hero & Search Bar -->
         <section class="glass-card rounded-2xl p-5 sm:p-7 shadow-xl">
@@ -286,6 +295,4 @@
                                     <span class="text-sm font-semibold text-white">3. Capital y Strikes</span>
                                     <span id="p3-score-text" class="font-mono text-xs font-bold text-emerald-400">17 / 20 pts</span>
                                 </div>
-                                <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden mb-3">
-                                    <div id="p3-bar" class="bar-fill h-full bg-emerald-400 rounded-full" style="width: 85%"></div>
-    
+             
